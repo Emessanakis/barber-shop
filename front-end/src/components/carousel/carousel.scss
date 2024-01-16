@@ -1,0 +1,45 @@
+.intro-cont {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.05));
+    border-radius: 15px;
+}
+
+.carousel-root {
+    width: 100%;
+    height: 75vh;
+}
+
+.carousel .carousel-wrap {
+    width: 100%;
+    min-height: 75vh;
+}
+
+.carousel .carousel-image {
+    width: 100%;
+    height: 75vh;
+    object-fit: cover;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9));
+}
+
+.carousel .control-dots .dot {
+    margin: 15px;
+    padding: 10px;
+    background-color: rgb(180, 180, 180);
+}
+
+.carousel * {
+    border-radius: 15px;
+}
+
+.carousel .thumbs {
+    display: none;
+}
+
+.control-arrow {
+    display: none;
+}
+
+.carousel-status {
+    display: none;
+}
