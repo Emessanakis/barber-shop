@@ -85,18 +85,7 @@ app.get("/our-team", (req, res) => {
     );
 });
 
-app.get("/reservations", (req, res) => {
-    pool.query(
-        "SELECT * FROM reservations",
-        (err, result) => {
-            if (err) {
-                res.send({ err: err });
-            } else {
-                res.send(result);
-            }
-        }
-    );
-});
+
 app.get("/shifts", (req, res) => {
     pool.query(
         "SELECT * FROM shifts",
@@ -144,6 +133,46 @@ app.get("/discount-codes", (req, res) => {
             }
         }
     );
+});
+
+app.post('/reservation', (req, res) => {
+    const {
+        firstName,
+        lastName,
+        email,
+        phone,
+        products,
+        barber,
+        appointmentTime,
+        totalPrice,
+        totalDuration
+    } = req.body;
+
+    pool.query(
+        'INSERT INTO reservations (user_id, form_user_first_name, form_user_phone, apointment_time, form_user_last_name, form_user_email, products, price, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [barber, firstName, phone, appointmentTime, lastName, email, products, totalPrice, totalDuration],
+        (error, results) => {
+            if (error) {
+                console.error('Form submission failed:', error);
+                return res.status(500).json({ message: 'Form submission failed.', error: error.message });
+            }
+            res.status(200).json({ message: 'Form submitted successfully!' });
+        }
+    );
+});
+
+app.get("/reservations", (req, res) => {
+    const { user_id } = req.query;
+
+    const query = `SELECT user_id, apointment_time, duration FROM reservations WHERE user_id = ${user_id}`;
+
+    pool.query(query, (err, result) => {
+        if (err) {
+            res.send({ err: err });
+        } else {
+            res.send(result);
+        }
+    });
 });
 
 const PORT = process.env.PORT || 8080;

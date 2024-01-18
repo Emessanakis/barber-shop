@@ -11,7 +11,7 @@ const NewsletterBanner = () => {
     // const [followersCount, setFollowersCount] = useState(null);
     const [mediaCount, setMediaCount] = useState(null);
 
-    const accessToken = 'Use a token here';
+    const accessToken = 'Add your token here';
     const getUserFollowersMediaCount = `https://graph.instagram.com/v12.0/me?fields=id,media_count&access_token=`;
 
     useEffect(() => {

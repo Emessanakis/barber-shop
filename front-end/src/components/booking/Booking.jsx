@@ -9,6 +9,8 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
     const [shifts, setShifts] = useState([]);
     const [userShifts, setUserShifts] = useState([]);
     const [selectedHourId, setSelectedHourId] = useState(null);
+    const [reservations, setReservations] = useState([]);
+
     const futureDates = Array.from({ length: 8 }, (_, index) => addDays(today, index));
 
     const baseURL = "http://localhost:8080";
@@ -25,6 +27,25 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
         }
     }, [selectedBarbers]);
 
+
+    useEffect(() => {
+        const user_id = selectedBarbers.length > 0 ? selectedBarbers[0].user_id : null;
+
+        if (user_id) {
+            axios.get(`${baseURL}/reservations?user_id=${user_id}`)
+                .then(response => {
+                    setReservations(response.data);
+                })
+                .catch(error => console.error('Error fetching reservations:', error));
+        }
+    }, [selectedBarbers]);
+
+
+
+    const getUserShifts = (user_id, day_of_week) => {
+        return shifts.filter(shift => shift.user_id === user_id && shift.day_of_week === day_of_week);
+    };
+
     useEffect(() => {
         const dayOfWeek = format(selectedDate, 'EEEE');
         const user_id = selectedBarbers.length > 0 ? selectedBarbers[0].user_id : null;
@@ -32,25 +53,56 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
         setUserShifts(shiftsForDate);
     }, [selectedDate, selectedBarbers]);
 
-    const getUserShifts = (user_id, day_of_week) => {
-        return shifts.filter(shift => shift.user_id === user_id && shift.day_of_week === day_of_week);
-    };
 
     const generateHourArray = (start, end, step = 10, date) => {
         const startTime = new Date(`2022-01-01 ${start}`);
         const endTime = new Date(`2022-01-01 ${end}`);
         const hoursArray = [];
         let currentTime = startTime;
+        const disabledHoursSet = new Set(); // Set to track disabled hours
 
         while (currentTime <= endTime) {
             const formattedHour = format(currentTime, 'HH:mm');
             const currentDateTime = new Date(date);
-
-            hoursArray.push({
-                id: formattedHour,
-                hour: formattedHour,
-                date: format(currentDateTime, 'EEEE dd MMMM'),
+            const reservationDateTime = format(new Date(`${format(currentDateTime, 'yyyy-MM-dd')} ${formattedHour}`), 'yyyy-MM-dd HH:mm');
+            const isReserved = reservations.some(reservation => {
+                const reservationDateTimeFormatted = format(new Date(reservation.apointment_time), 'yyyy-MM-dd HH:mm');
+                return reservationDateTimeFormatted === reservationDateTime;
             });
+
+            const reservationIndex = reservations.findIndex(reservation => {
+                const reservationDateTimeFormatted = format(new Date(reservation.apointment_time), 'yyyy-MM-dd HH:mm');
+                return reservationDateTimeFormatted === reservationDateTime;
+            });
+
+            if (reservationIndex !== -1) {
+                const duration = parseInt(reservations[reservationIndex].duration, 10);
+
+                for (let i = 0; i <= duration / 10; i++) {
+                    const nextSlotTime = addMinutes(currentTime, i * 10);
+                    const nextSlotFormattedHour = format(nextSlotTime, 'HH:mm');
+
+                    if (!disabledHoursSet.has(nextSlotFormattedHour)) {
+                        hoursArray.push({
+                            id: nextSlotFormattedHour,
+                            hour: nextSlotFormattedHour,
+                            date: format(currentDateTime, 'yyyy-MM-dd'),
+                            disabled: true,
+                        });
+
+                        disabledHoursSet.add(nextSlotFormattedHour);
+                    }
+                }
+            } else if (!disabledHoursSet.has(formattedHour)) {
+                hoursArray.push({
+                    id: formattedHour,
+                    hour: formattedHour,
+                    date: format(currentDateTime, 'yyyy-MM-dd'),
+                    disabled: isReserved,
+                });
+
+                disabledHoursSet.add(formattedHour);
+            }
 
             currentTime.setMinutes(currentTime.getMinutes() + step);
         }
@@ -58,15 +110,36 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
         return hoursArray;
     };
 
+
+
+    const addMinutes = (date, minutes) => {
+        return new Date(date.getTime() + minutes * 60000);
+    };
+
     const handleHourClick = (hourId, shiftIndex, date) => {
-        onAddDateToCart(hourId, shiftIndex, date);
-        setSelectedHourId(hourId);
+        const isReserved = isTimeReserved(date, hourId);
+
+        if (!isReserved) {
+            onAddDateToCart(hourId, shiftIndex, date);
+            setSelectedHourId(hourId);
+        } else {
+            console.log('This time is already reserved.');
+        }
     };
 
     const isWeekend = (date) => {
         const dayOfWeek = format(date, 'EEEE');
         return dayOfWeek === 'Saturday' || dayOfWeek === 'Sunday';
     };
+
+    const isTimeReserved = (date, time) => {
+        const reservationDateTime = format(new Date(`${date} ${time}`), 'yyyy-MM-dd HH:mm');
+        return reservations.some(reservation => {
+            const reservationDateTimeFormatted = format(new Date(reservation.apointment_time), 'yyyy-MM-dd HH:mm');
+            return reservationDateTimeFormatted === reservationDateTime;
+        });
+    };
+
 
     return (
         <React.Fragment>
@@ -131,12 +204,13 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
                                 key={hourIndex}
                                 onClick={() => handleHourClick(hour.id, shiftIndex, hour.date)}
                                 disableRipple
+                                disabled={hour.disabled}
                                 sx={{
                                     borderRadius: 0,
                                     margin: 0,
                                     padding: 0,
                                     '&:hover': {
-                                        backgroundColor: 'rgba(255, 255, 255, 1)',
+                                        backgroundColor: hour.disabled ? '#ccc' : 'rgba(255, 255, 255, 1)',
                                     },
                                 }}
                             >
@@ -149,11 +223,9 @@ export default function Booking({ selectedBarbers, onAddDateToCart }) {
                                         mt: 2,
                                         height: 'auto',
                                         width: '700px',
-                                        border: 'none',
-                                        '&:hover': {
-                                            backgroundColor: '#F1F1F1',
-                                        },
-                                        border: hour.id === selectedHourId ? '2px solid #6f00ff' : 'none', // Apply border based on selectedHourId
+                                        color: hour.disabled ? '#ccc' : 'black',
+
+                                        border: hour.id === selectedHourId ? '2px solid #6f00ff' : 'none',
                                     }}
                                 >
                                     <Box sx={{ textTransform: 'capitalize' }}>

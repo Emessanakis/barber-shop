@@ -15,7 +15,7 @@ const InstagramFeed = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     // const [imageCount, setImageCount] = useState(10);
 
-    const accessToken = 'Use a token here';
+    const accessToken = 'Add your token here';
     const getUserUrl = `https://graph.instagram.com/me?fields=id,username&access_token=`;
     const getMediaUrl = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,permalink,thumbnail_url,timestamp&limit=`;
     //${imageCount}

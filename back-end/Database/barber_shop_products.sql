@@ -38,7 +38,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (1,'Men\'s Haircut','30 minutes','A Haircut for Men',14),(2,'Beard trimming','10 minutes','Beard trimming with machine only.',4),(3,'Men\'s Haircut (Primary school)','25 minutes ','Even primary school',11),(4,'Men\'s Haircut (Junior high school)','30 minutes ','High school',13);
+INSERT INTO `products` VALUES (1,'Men\'s Haircut','30 minutes','A Haircut for Men',14),(2,'Beard trimming','10 minutes','Beard trimming with machine only.',4),(3,'Men\'s Haircut (Primary school)','20 minutes ','Even primary school',11),(4,'Men\'s Haircut (Junior high school)','30 minutes ','High school',13);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -51,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-01-16 14:02:26
+-- Dump completed on 2024-01-18 12:40:33

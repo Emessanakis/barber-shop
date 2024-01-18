@@ -16,7 +16,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
-
+import { format } from 'date-fns';
 
 export default function BookNow() {
     const hasAcceptedCookies = localStorage.getItem('cookieConsent') === 'true';
@@ -25,7 +25,6 @@ export default function BookNow() {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [selectedBarbers, setSelectedBarbers] = useState([]);
     const [disabledButtons, setDisabledButtons] = useState([]);
-    const [proceedClicked, setProceedClicked] = useState(false);
     const [breadcrumbStep, setBreadcrumbStep] = useState(0);
     const [selectedDate, setSelectedDate] = useState([]);
     const [selectedDateTime, setSelectedDateTime] = useState([]);
@@ -157,20 +156,30 @@ export default function BookNow() {
     const validatePhone = (phone) => phone.replace(/\D/g, '').length >= 8;
 
     const handleProceed = () => {
-        setProceedClicked(true);
 
-        if (breadcrumbStep === 0 && selectedProducts.length > 0) {
+        if (breadcrumbStep === 0 && selectedProducts.length === 0) {
+            setDialogOpen(true);
+            setDialogContent('Please select at least one product.');
+        } else if (breadcrumbStep === 0 && selectedProducts.length > 0) {
             setBreadcrumbStep(1);
             // console.log('Products Data:', {
             //     selectedProducts: selectedProducts,
             //     totalPrice: calculateTotalPrice(),
             //     totalDuration: calculateTotalTime(),
             // });
+        }
+        else if (breadcrumbStep === 1 && selectedBarbers.length === 0) {
+            setDialogOpen(true);
+            setDialogContent('Please select a barber.');
         } else if (breadcrumbStep === 1 && selectedBarbers.length > 0) {
             setBreadcrumbStep(2);
             // console.log('Barber Data:', {
             //     selectedBarbers: selectedBarbers,
             // });
+        }
+        else if (breadcrumbStep === 2 && selectedDateTime.length === 0) {
+            setDialogOpen(true);
+            setDialogContent('Please select a date and time.');
         } else if (breadcrumbStep === 2 && selectedDateTime.length > 0) {
             setBreadcrumbStep(3);
             // console.log('Date Time:', {
@@ -199,11 +208,42 @@ export default function BookNow() {
                 setDialogContent(Object.values(newErrors).join('\n'));
                 setDialogOpen(true);
             } else {
-                // console.log('Form Data:', {
-                //     formData: formData,
-                // });
-                setSuccessDialogOpen(true);
+                const currentYear = new Date().getFullYear();
+                const formattedDateTime = format(new Date(selectedDateTime), `${currentYear}-MM-dd  HH:mm:ss`);
+                // Adjust the format to eliminate extra spaces
+                const formattedDateTimeWithoutSpaces = formattedDateTime.replace(/\s+/g, ' ');
+
+                const requestData = {
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    products: selectedProducts.map(product => product.product_title).join(', '),
+                    barber: selectedBarbers.map(barber => barber.user_id).join(', '),
+                    appointmentTime: formattedDateTimeWithoutSpaces,
+                    totalPrice: calculateTotalPrice(),
+                    totalDuration: calculateTotalTime(),
+                };
+
+                console.log('Data:', requestData);
+
+                axios.post(
+                    `${baseURL}/reservation`,
+                    requestData,
+                    {
+                        withCredentials: true,
+                    }
+                )
+                    .then((response) => {
+                        setSuccessDialogOpen(true);
+                    })
+                    .catch((error) => {
+                        console.error('Reservation failed:', error);
+                    });
             }
+
+
+
         } else {
             console.warn('No data selected to proceed.');
         }
